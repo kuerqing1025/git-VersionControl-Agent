@@ -29,28 +29,33 @@ The server provides the following tools:
    - Output: ASCII tree representation of the repository structure
 
 2. `git_read_files`: Reads and returns the contents of specified files in a repository
+
    - Input: Repository URL and list of file paths
    - Output: Dictionary mapping file paths to their contents
 
+3. `git_search_code`: Searches for patterns in repository code
+   - Input: Repository URL, search pattern, optional file patterns, case sensitivity, and context lines
+   - Output: JSON with search results including matching lines and context
+
 ### Branch Operations
 
-3. `git_branch_diff`: Compare two branches and show files changed between them
+4. `git_branch_diff`: Compare two branches and show files changed between them
    - Input: Repository URL, source branch, target branch, and optional show_patch flag
    - Output: JSON with commit count and diff summary
 
 ### Commit Operations
 
-4. `git_commit_history`: Get commit history for a branch with optional filtering
+5. `git_commit_history`: Get commit history for a branch with optional filtering
 
    - Input: Repository URL, branch name, max count, author filter, and since date
    - Output: JSON with commit details
 
-5. `git_commits_details`: Get detailed information about commits including full messages and diffs
+6. `git_commits_details`: Get detailed information about commits including full messages and diffs
 
    - Input: Repository URL, branch name, max count, and include_diff flag
    - Output: JSON with detailed commit information
 
-6. `git_local_changes`: Get uncommitted changes in the working directory
+7. `git_local_changes`: Get uncommitted changes in the working directory
    - Input: Local repository path
    - Output: JSON with status information and diffs
 

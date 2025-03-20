@@ -14,6 +14,7 @@ import {
   handleGitCommitHistory,
   handleGitCommitsDetails,
   handleGitLocalChanges,
+  handleGitSearchCode,
 } from "./handlers/index.js";
 
 /**
@@ -199,6 +200,39 @@ export class GitRepoBrowserServer {
             required: ["repo_path"],
           },
         },
+        {
+          name: "git_search_code",
+          description: "Search for patterns in repository code.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              repo_url: {
+                type: "string",
+                description: "The URL of the Git repository",
+              },
+              pattern: {
+                type: "string",
+                description: "Search pattern (regex or string)",
+              },
+              file_patterns: {
+                type: "array",
+                items: { type: "string" },
+                description: 'Optional file patterns to filter (e.g., "*.js")',
+              },
+              case_sensitive: {
+                type: "boolean",
+                description: "Whether the search is case sensitive",
+                default: false,
+              },
+              context_lines: {
+                type: "integer",
+                description: "Number of context lines to include",
+                default: 2,
+              },
+            },
+            required: ["repo_url", "pattern"],
+          },
+        },
       ],
     }));
 
@@ -216,6 +250,8 @@ export class GitRepoBrowserServer {
           return handleGitCommitsDetails(request.params.arguments);
         case "git_local_changes":
           return handleGitLocalChanges(request.params.arguments);
+        case "git_search_code":
+          return handleGitSearchCode(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
