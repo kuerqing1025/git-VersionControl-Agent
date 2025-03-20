@@ -27,6 +27,14 @@ import {
   handleGitRebase,
   handleGitConfig,
   handleGitReset,
+  handleGitArchive,
+  handleGitAttributes,
+  handleGitBlame,
+  handleGitClean,
+  handleGitHooks,
+  handleGitLFS,
+  handleGitLFSFetch,
+  handleGitRevert,
 } from "./handlers/index.js";
 
 /**
@@ -608,6 +616,236 @@ export class GitRepoBrowserServer {
           required: ["repo_path"],
         },
       },
+
+      // Archive Operations
+      {
+        name: "git_archive",
+        description: "Create a git archive (zip or tar).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            output_path: {
+              type: "string",
+              description: "Output path for the archive",
+            },
+            format: {
+              type: "string",
+              description: "Archive format (zip or tar)",
+              default: "zip",
+              enum: ["zip", "tar"],
+            },
+            prefix: {
+              type: "string",
+              description: "Prefix for files in the archive",
+            },
+            treeish: {
+              type: "string",
+              description: "Tree-ish to archive (default: HEAD)",
+              default: "HEAD",
+            },
+          },
+          required: ["repo_path", "output_path"],
+        },
+      },
+
+      // Attributes Operations
+      {
+        name: "git_attributes",
+        description: "Manage git attributes for files.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            action: {
+              type: "string",
+              description: "Action (get, set, list)",
+              default: "list",
+              enum: ["get", "set", "list"],
+            },
+            pattern: {
+              type: "string",
+              description: "File pattern",
+            },
+            attribute: {
+              type: "string",
+              description: "Attribute to set",
+            },
+          },
+          required: ["repo_path", "action"],
+        },
+      },
+
+      // Blame Operations
+      {
+        name: "git_blame",
+        description: "Get blame information for a file.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            file_path: {
+              type: "string",
+              description: "Path to the file",
+            },
+            rev: {
+              type: "string",
+              description: "Revision to blame (default: HEAD)",
+              default: "HEAD",
+            },
+          },
+          required: ["repo_path", "file_path"],
+        },
+      },
+
+      // Clean Operations
+      {
+        name: "git_clean",
+        description: "Perform git clean operations.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            directories: {
+              type: "boolean",
+              description: "Whether to remove directories as well",
+              default: false,
+            },
+            force: {
+              type: "boolean",
+              description: "Whether to force clean",
+              default: false,
+            },
+            dry_run: {
+              type: "boolean",
+              description: "Whether to perform a dry run",
+              default: true,
+            },
+          },
+          required: ["repo_path"],
+        },
+      },
+
+      // Hooks Operations
+      {
+        name: "git_hooks",
+        description: "Manage git hooks in the repository.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            action: {
+              type: "string",
+              description: "Hook action (list, get, create, enable, disable)",
+              default: "list",
+              enum: ["list", "get", "create", "enable", "disable"],
+            },
+            hook_name: {
+              type: "string",
+              description:
+                "Name of the hook (e.g., 'pre-commit', 'post-merge')",
+            },
+            script: {
+              type: "string",
+              description: "Script content for the hook (for create action)",
+            },
+          },
+          required: ["repo_path", "action"],
+        },
+      },
+
+      // LFS Operations
+      {
+        name: "git_lfs",
+        description: "Manage Git LFS (Large File Storage).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            action: {
+              type: "string",
+              description: "LFS action (install, track, untrack, list)",
+              default: "list",
+              enum: ["install", "track", "untrack", "list"],
+            },
+            patterns: {
+              type: "array",
+              description: "File patterns for track/untrack",
+              items: { type: "string" },
+            },
+          },
+          required: ["repo_path", "action"],
+        },
+      },
+
+      // LFS Fetch Operations
+      {
+        name: "git_lfs_fetch",
+        description: "Fetch LFS objects from the remote repository.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            dry_run: {
+              type: "boolean",
+              description: "Whether to perform a dry run",
+              default: false,
+            },
+            pointers: {
+              type: "boolean",
+              description: "Whether to convert pointers to objects",
+              default: false,
+            },
+          },
+          required: ["repo_path"],
+        },
+      },
+
+      // Revert Operations
+      {
+        name: "git_revert",
+        description: "Revert the current branch to a commit or state.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_path: {
+              type: "string",
+              description: "The path to the local Git repository",
+            },
+            commit: {
+              type: "string",
+              description: "Commit hash or reference to revert",
+            },
+            no_commit: {
+              type: "boolean",
+              description: "Whether to stage changes without committing",
+              default: false,
+            },
+          },
+          required: ["repo_path"],
+        },
+      },
     ];
 
     // Set up dynamic tool listing handler
@@ -678,6 +916,14 @@ export class GitRepoBrowserServer {
       git_rebase: handleGitRebase,
       git_config: handleGitConfig,
       git_reset: handleGitReset,
+      git_archive: handleGitArchive,
+      git_attributes: handleGitAttributes,
+      git_blame: handleGitBlame,
+      git_clean: handleGitClean,
+      git_hooks: handleGitHooks,
+      git_lfs: handleGitLFS,
+      git_lfs_fetch: handleGitLFSFetch,
+      git_revert: handleGitRevert,
     };
 
     // Register aliases for O(1) lookup
