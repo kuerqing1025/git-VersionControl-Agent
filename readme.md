@@ -136,6 +136,36 @@ node src/index.js
 
 The server runs on stdio, making it compatible with MCP clients.
 
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+### Automatic NPM Publishing
+
+The repository is configured with a GitHub Actions workflow that automatically publishes the package to npm when changes are pushed to the master branch.
+
+#### Setting up NPM_TOKEN
+
+To enable automatic publishing, you need to add your NPM authentication token as a GitHub secret:
+
+1. Generate an npm access token:
+
+   - Log in to your npm account on [npmjs.com](https://www.npmjs.com/)
+   - Go to your profile settings
+   - Select "Access Tokens"
+   - Click "Generate New Token" (select "Publish" scope)
+   - Copy the generated token
+
+2. Add the token to your GitHub repository:
+   - Go to your GitHub repository
+   - Navigate to "Settings" > "Secrets and variables" > "Actions"
+   - Click "New repository secret"
+   - Name: `NPM_TOKEN`
+   - Value: Paste your npm access token
+   - Click "Add secret"
+
+Once configured, any push to the master branch will trigger the workflow to publish the package to npm.
+
 ## License
 
 MIT License - see the [LICENSE](LICENSE) file for details.

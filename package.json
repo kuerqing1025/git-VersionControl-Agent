@@ -8,7 +8,8 @@
     "git-commands-mcp": "src/index.js"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "prepublishOnly": "npm ci && echo \"No tests specified - publishing anyway\""
   },
   "author": "sreeram balamurugan",
   "license": "MIT",
