@@ -144,24 +144,26 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 The repository is configured with a GitHub Actions workflow that automatically publishes the package to npm when changes are pushed to the master branch.
 
-#### Setting up NPM_TOKEN
+#### Setting up NPM_AUTOMATION_TOKEN
 
-To enable automatic publishing, you need to add your NPM authentication token as a GitHub secret:
+To enable automatic publishing, you need to add an npm Automation token as a GitHub secret (this works even with accounts that have 2FA enabled):
 
-1. Generate an npm access token:
+1. Generate an npm Automation token:
 
    - Log in to your npm account on [npmjs.com](https://www.npmjs.com/)
    - Go to your profile settings
    - Select "Access Tokens"
-   - Click "Generate New Token" (select "Publish" scope)
+   - Click "Generate New Token"
+   - Select "Automation" token type
+   - Set the appropriate permissions (needs "Read and write" for packages)
    - Copy the generated token
 
 2. Add the token to your GitHub repository:
    - Go to your GitHub repository
    - Navigate to "Settings" > "Secrets and variables" > "Actions"
    - Click "New repository secret"
-   - Name: `NPM_TOKEN`
-   - Value: Paste your npm access token
+   - Name: `NPM_AUTOMATION_TOKEN`
+   - Value: Paste your npm Automation token
    - Click "Add secret"
 
 Once configured, any push to the master branch will trigger the workflow to publish the package to npm.

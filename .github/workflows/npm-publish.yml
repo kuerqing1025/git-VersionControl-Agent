@@ -22,6 +22,8 @@ jobs:
         run: npm ci
 
       - name: Publish to npm
-        run: npm publish
+        # Use --access=public if it's a scoped package (@username/package-name)
+        run: npm publish --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Use an Automation token to avoid 2FA issues
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTOMATION_TOKEN }}
