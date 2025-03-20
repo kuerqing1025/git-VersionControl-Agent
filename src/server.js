@@ -15,6 +15,19 @@ import {
   handleGitCommitsDetails,
   handleGitLocalChanges,
   handleGitSearchCode,
+  handleGitCommit,
+  handleGitTrack,
+  handleGitCheckoutBranch,
+  handleGitDeleteBranch,
+  handleGitMergeBranch,
+  handleGitPush,
+  handleGitPull,
+  handleGitStash,
+  handleGitCreateTag,
+  handleGitRebase,
+  handleGitConfig,
+  handleGitReset,
+  handleGitBranchDiff,
 } from "./handlers/index.js";
 
 /**
@@ -263,28 +276,38 @@ export class GitRepoBrowserServer {
       ],
     }));
 
+    // Create a handlers mapping for O(1) lookup time
+    const handlersMap = {
+      git_directory_structure: handleGitDirectoryStructure,
+      git_read_files: handleGitReadFiles,
+      git_branch_diff: handleGitBranchDiff,
+      git_commit_history: handleGitCommitHistory,
+      git_commits_details: handleGitCommitsDetails,
+      git_local_changes: handleGitLocalChanges,
+      git_search_code: handleGitSearchCode,
+      git_commit: handleGitCommit,
+      git_track: handleGitTrack,
+      git_checkout_branch: handleGitCheckoutBranch,
+      git_delete_branch: handleGitDeleteBranch,
+      git_merge_branch: handleGitMergeBranch,
+      git_push: handleGitPush,
+      git_pull: handleGitPull,
+      git_stash: handleGitStash,
+      git_create_tag: handleGitCreateTag,
+      git_rebase: handleGitRebase,
+      git_config: handleGitConfig,
+      git_reset: handleGitReset,
+    };
+
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      switch (request.params.name) {
-        case "git_directory_structure":
-          return handleGitDirectoryStructure(request.params.arguments);
-        case "git_read_files":
-          return handleGitReadFiles(request.params.arguments);
-        case "git_branch_diff":
-          return handleGitBranchDiff(request.params.arguments);
-        case "git_commit_history":
-          return handleGitCommitHistory(request.params.arguments);
-        case "git_commits_details":
-          return handleGitCommitsDetails(request.params.arguments);
-        case "git_local_changes":
-          return handleGitLocalChanges(request.params.arguments);
-        case "git_search_code":
-          return handleGitSearchCode(request.params.arguments);
-        default:
-          throw new McpError(
-            ErrorCode.MethodNotFound,
-            `Unknown tool: ${request.params.name}`
-          );
+      const handler = handlersMap[request.params.name];
+      if (handler) {
+        return handler(request.params.arguments);
       }
+      throw new McpError(
+        ErrorCode.MethodNotFound,
+        `Unknown tool: ${request.params.name}`
+      );
     });
   }
 

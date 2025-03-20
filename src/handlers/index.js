@@ -623,3 +623,893 @@ export async function handleGitSearchCode({
     };
   }
 }
+
+/**
+ *
+ * @param {string} commitMessage
+ * @param {string} repoPath
+ * @param {string} branch
+ * @param {string} userName
+ * @param {string} userEmail
+ * @returns {Promise<{ commitMessage: string, commitMessageFile: string; commitHash: string; }>}
+ */
+export async function writeCommitMessage(commitMessage, repoPath) {
+  const git = simpleGit(repoPath);
+  const commitMessageFile = path.join(repoPath, ".git/COMMIT_EDITMSG");
+  await fs.writeFile(commitMessageFile, commitMessage);
+  await git.add([commitMessageFile]);
+  const commitHash = await git.commit([
+    "-F",
+    commitMessageFile,
+    "--author",
+    `${userName} <${userEmail}>`,
+  ]);
+  return { commitMessage, commitMessageFile, commitHash };
+}
+
+/**
+ * Creates a commit with the specified message
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} message - Commit message
+ * @returns {Object} - Commit result
+ */
+export async function handleGitCommit({ repo_path, message }) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // Create the commit (only commit what's in the staging area)
+    const commitResult = await git.commit(message);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              commit_hash: commitResult.commit,
+              commit_message: message,
+              summary: commitResult.summary,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to create commit: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Tracks (stages) specific files or all files
+ * @param {string} repoPath - Path to the local repository
+ * @param {string[]} files - Array of file paths to track/stage (use ["."] for all files)
+ * @returns {Object} - Tracking result
+ */
+export async function handleGitTrack({ repo_path, files = ["."] }) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // Add the specified files to the staging area
+    await git.add(files);
+
+    // Get status to show what files were tracked
+    const status = await git.status();
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Tracked ${
+                files.length === 1 && files[0] === "."
+                  ? "all files"
+                  : files.length + " files"
+              }`,
+              staged: status.staged,
+              not_staged: status.not_added,
+              modified: status.modified,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to track files: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Creates and checks out a new branch
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} branchName - Name of the new branch
+ * @param {string} startPoint - Starting point for the branch (optional)
+ * @returns {Object} - Branch creation result
+ */
+export async function handleGitCheckoutBranch({
+  repo_path,
+  branch_name,
+  start_point = null,
+  create = false,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    if (create) {
+      // Create and checkout a new branch
+      if (start_point) {
+        await git.checkoutBranch(branch_name, start_point);
+      } else {
+        await git.checkoutLocalBranch(branch_name);
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                success: true,
+                message: `Created and checked out new branch: ${branch_name}`,
+                branch: branch_name,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    } else {
+      // Just checkout an existing branch
+      await git.checkout(branch_name);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                success: true,
+                message: `Checked out branch: ${branch_name}`,
+                branch: branch_name,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to checkout branch: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Deletes a branch
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} branchName - Name of the branch to delete
+ * @param {boolean} force - Whether to force deletion
+ * @returns {Object} - Branch deletion result
+ */
+export async function handleGitDeleteBranch({
+  repo_path,
+  branch_name,
+  force = false,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // Get current branch to prevent deleting the active branch
+    const currentBranch = await git.branch();
+    if (currentBranch.current === branch_name) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              { error: "Cannot delete the currently checked out branch" },
+              null,
+              2
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Delete the branch
+    if (force) {
+      await git.deleteLocalBranch(branch_name, true);
+    } else {
+      await git.deleteLocalBranch(branch_name);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Deleted branch: ${branch_name}`,
+              branch: branch_name,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to delete branch: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Merges a source branch into the current branch
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} sourceBranch - Branch to merge from
+ * @param {string} targetBranch - Branch to merge into (optional, uses current branch if not provided)
+ * @param {boolean} noFastForward - Whether to create a merge commit even if fast-forward is possible
+ * @returns {Object} - Merge result
+ */
+export async function handleGitMergeBranch({
+  repo_path,
+  source_branch,
+  target_branch = null,
+  no_fast_forward = false,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // If target branch is specified, checkout to it first
+    if (target_branch) {
+      await git.checkout(target_branch);
+    }
+
+    // Perform the merge
+    let mergeOptions = [];
+    if (no_fast_forward) {
+      mergeOptions = ["--no-ff"];
+    }
+
+    const mergeResult = await git.merge([...mergeOptions, source_branch]);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              result: mergeResult,
+              message: `Merged ${source_branch} into ${
+                target_branch || "current branch"
+              }`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              error: `Failed to merge branches: ${error.message}`,
+              conflicts: error.git ? error.git.conflicts : null,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+// ADDITIONAL FEATURES
+
+/**
+ * Pushes changes to a remote repository
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} remote - Remote name (default: origin)
+ * @param {string} branch - Branch to push (default: current branch)
+ * @param {boolean} force - Whether to force push
+ * @returns {Object} - Push result
+ */
+export async function handleGitPush({
+  repo_path,
+  remote = "origin",
+  branch = null,
+  force = false,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // If no branch specified, get the current branch
+    if (!branch) {
+      const branchInfo = await git.branch();
+      branch = branchInfo.current;
+    }
+
+    // Perform the push
+    let pushOptions = [];
+    if (force) {
+      pushOptions.push("--force");
+    }
+
+    const pushResult = await git.push(remote, branch, pushOptions);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              result: pushResult,
+              message: `Pushed ${branch} to ${remote}`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to push changes: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Pulls changes from a remote repository
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} remote - Remote name (default: origin)
+ * @param {string} branch - Branch to pull (default: current branch)
+ * @param {boolean} rebase - Whether to rebase instead of merge
+ * @returns {Object} - Pull result
+ */
+export async function handleGitPull({
+  repo_path,
+  remote = "origin",
+  branch = null,
+  rebase = false,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // If no branch specified, use current branch
+    if (!branch) {
+      const branchInfo = await git.branch();
+      branch = branchInfo.current;
+    }
+
+    // Set up pull options
+    const pullOptions = {};
+    if (rebase) {
+      pullOptions["--rebase"] = null;
+    }
+
+    // Perform the pull
+    const pullResult = await git.pull(remote, branch, pullOptions);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              result: pullResult,
+              message: `Pulled from ${remote}/${branch}`,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              error: `Failed to pull changes: ${error.message}`,
+              conflicts: error.git ? error.git.conflicts : null,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Creates or applies a stash
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} action - Stash action (save, pop, apply, list, drop)
+ * @param {string} message - Stash message (for save action)
+ * @param {number} index - Stash index (for pop, apply, drop actions)
+ * @returns {Object} - Stash operation result
+ */
+export async function handleGitStash({
+  repo_path,
+  action = "save",
+  message = "",
+  index = 0,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    let result;
+    switch (action) {
+      case "save":
+        result = await git.stash(["save", message]);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: "Changes stashed successfully",
+                  stash_message: message,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+      case "pop":
+        result = await git.stash(["pop", index.toString()]);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Applied and dropped stash@{${index}}`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+      case "apply":
+        result = await git.stash(["apply", index.toString()]);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Applied stash@{${index}}`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+      case "list":
+        result = await git.stash(["list"]);
+        // Parse the stash list
+        const stashList = result
+          .trim()
+          .split("\n")
+          .filter((line) => line.trim() !== "")
+          .map((line) => {
+            const match = line.match(/stash@\{(\d+)\}: (.*)/);
+            if (match) {
+              return {
+                index: parseInt(match[1]),
+                description: match[2],
+              };
+            }
+            return null;
+          })
+          .filter((item) => item !== null);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  stashes: stashList,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+      case "drop":
+        result = await git.stash(["drop", index.toString()]);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Dropped stash@{${index}}`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+      default:
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                { error: `Unknown stash action: ${action}` },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to perform stash operation: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Creates a tag
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} tagName - Name of the tag
+ * @param {string} message - Tag message (for annotated tags)
+ * @param {boolean} annotated - Whether to create an annotated tag
+ * @returns {Object} - Tag creation result
+ */
+export async function handleGitCreateTag({
+  repo_path,
+  tag_name,
+  message = "",
+  annotated = true,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    if (annotated) {
+      await git.addAnnotatedTag(tag_name, message);
+    } else {
+      await git.addTag(tag_name);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Created ${
+                annotated ? "annotated " : ""
+              }tag: ${tag_name}`,
+              tag: tag_name,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to create tag: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Handles git rebase operations
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} onto - Branch or commit to rebase onto
+ * @param {boolean} interactive - Whether to perform an interactive rebase
+ * @returns {Object} - Rebase result
+ */
+export async function handleGitRebase({
+  repo_path,
+  onto,
+  interactive = false,
+}) {
+  try {
+    // For interactive rebase, we need to use exec as simple-git doesn't support it well
+    if (interactive) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              { error: "Interactive rebase not supported through API" },
+              null,
+              2
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    const git = simpleGit(repo_path);
+    const rebaseResult = await git.rebase([onto]);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Rebased onto ${onto}`,
+              result: rebaseResult,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              error: `Failed to rebase: ${error.message}`,
+              conflicts: error.git ? error.git.conflicts : null,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Configures git settings for the repository
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} scope - Configuration scope (local, global, system)
+ * @param {string} key - Configuration key
+ * @param {string} value - Configuration value
+ * @returns {Object} - Configuration result
+ */
+export async function handleGitConfig({
+  repo_path,
+  scope = "local",
+  key,
+  value,
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // Set the configuration
+    await git.addConfig(key, value, false, scope);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Set ${scope} config ${key}=${value}`,
+              key: key,
+              value: value,
+              scope: scope,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to set git config: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Resets repository to specified commit or state
+ * @param {string} repoPath - Path to the local repository
+ * @param {string} mode - Reset mode (soft, mixed, hard)
+ * @param {string} to - Commit or reference to reset to
+ * @returns {Object} - Reset result
+ */
+export async function handleGitReset({
+  repo_path,
+  mode = "mixed",
+  to = "HEAD",
+}) {
+  try {
+    const git = simpleGit(repo_path);
+
+    // Check valid mode
+    if (!["soft", "mixed", "hard"].includes(mode)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                error: `Invalid reset mode: ${mode}. Use 'soft', 'mixed', or 'hard'.`,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Perform the reset
+    await git.reset([`--${mode}`, to]);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Reset (${mode}) to ${to}`,
+              mode: mode,
+              target: to,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            { error: `Failed to reset repository: ${error.message}` },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
