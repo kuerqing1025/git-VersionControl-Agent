@@ -152,6 +152,15 @@ export class GitRepoBrowserServer {
                 description:
                   'Get commits after this date (e.g., "1 week ago", "2023-01-01")',
               },
+              until: {
+                type: "string",
+                description:
+                  'Get commits before this date (e.g., "yesterday", "2023-12-31")',
+              },
+              grep: {
+                type: "string",
+                description: "Filter commits by message content (optional)",
+              },
             },
             required: ["repo_url"],
           },
@@ -181,6 +190,24 @@ export class GitRepoBrowserServer {
                 type: "boolean",
                 description: "Whether to include the commit diffs",
                 default: false,
+              },
+              since: {
+                type: "string",
+                description:
+                  'Get commits after this date (e.g., "1 week ago", "2023-01-01")',
+              },
+              until: {
+                type: "string",
+                description:
+                  'Get commits before this date (e.g., "yesterday", "2023-12-31")',
+              },
+              author: {
+                type: "string",
+                description: "Filter by author (optional)",
+              },
+              grep: {
+                type: "string",
+                description: "Filter commits by message content (optional)",
               },
             },
             required: ["repo_url"],

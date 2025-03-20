@@ -78,12 +78,12 @@ The server provides the following tools:
 
 5. `git_commit_history`: Get commit history for a branch with optional filtering
 
-   - Input: Repository URL, branch name, max count, author filter, and since date
+   - Input: Repository URL, branch name, max count, author filter, since date, until date, and message grep
    - Output: JSON with commit details
 
 6. `git_commits_details`: Get detailed information about commits including full messages and diffs
 
-   - Input: Repository URL, branch name, max count, and include_diff flag
+   - Input: Repository URL, branch name, max count, include_diff flag, author filter, since date, until date, and message grep
    - Output: JSON with detailed commit information
 
 7. `git_local_changes`: Get uncommitted changes in the working directory

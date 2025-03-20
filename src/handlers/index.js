@@ -172,7 +172,9 @@ export async function handleGitBranchDiff({
  * @param {string} params.branch - Branch name
  * @param {number} params.max_count - Maximum number of commits
  * @param {string} params.author - Author filter
- * @param {string} params.since - Date filter
+ * @param {string} params.since - Date filter (after)
+ * @param {string} params.until - Date filter (before)
+ * @param {string} params.grep - Message content filter
  * @returns {Object} - Tool response
  */
 export async function handleGitCommitHistory({
@@ -181,6 +183,8 @@ export async function handleGitCommitHistory({
   max_count = 10,
   author,
   since,
+  until,
+  grep,
 }) {
   try {
     const repoPath = await cloneRepo(repo_url);
@@ -197,6 +201,14 @@ export async function handleGitCommitHistory({
 
     if (since) {
       logOptions["--since"] = since;
+    }
+
+    if (until) {
+      logOptions["--until"] = until;
+    }
+
+    if (grep) {
+      logOptions["--grep"] = grep;
     }
 
     // Make sure branch exists locally
@@ -250,6 +262,10 @@ export async function handleGitCommitHistory({
  * @param {string} params.branch - Branch name
  * @param {number} params.max_count - Maximum number of commits
  * @param {boolean} params.include_diff - Whether to include diffs
+ * @param {string} params.author - Author filter
+ * @param {string} params.since - Date filter (after)
+ * @param {string} params.until - Date filter (before)
+ * @param {string} params.grep - Message content filter
  * @returns {Object} - Tool response
  */
 export async function handleGitCommitsDetails({
@@ -257,6 +273,10 @@ export async function handleGitCommitsDetails({
   branch = "main",
   max_count = 10,
   include_diff = false,
+  author,
+  since,
+  until,
+  grep,
 }) {
   try {
     const repoPath = await cloneRepo(repo_url);
@@ -268,14 +288,30 @@ export async function handleGitCommitsDetails({
       await git.fetch("origin", branch);
     }
 
+    // Prepare log options with full details
+    const logOptions = {
+      maxCount: max_count,
+      "--format": "fuller", // Get more detailed commit info
+    };
+
+    if (author) {
+      logOptions["--author"] = author;
+    }
+
+    if (since) {
+      logOptions["--since"] = since;
+    }
+
+    if (until) {
+      logOptions["--until"] = until;
+    }
+
+    if (grep) {
+      logOptions["--grep"] = grep;
+    }
+
     // Get commit history with full details
-    const log = await git.log(
-      {
-        maxCount: max_count,
-        "--format": "fuller", // Get more detailed commit info
-      },
-      branch
-    );
+    const log = await git.log(logOptions, branch);
 
     // Enhance with additional details
     const commitsDetails = [];
