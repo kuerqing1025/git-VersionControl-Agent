@@ -2,9 +2,40 @@
 
 A Node.js implementation of a Git repository browser using the Model Context Protocol (MCP).
 
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/bsreeram08/git-commands-mcp)
+[![npm package](https://img.shields.io/npm/v/git-commands-mcp.svg)](https://www.npmjs.com/package/git-commands-mcp)
+
+## Installation
+
+### NPM (Recommended)
+
+```bash
+npm install -g git-commands-mcp
+```
+
+### Manual Installation
+
+```bash
+git clone https://github.com/bsreeram08/git-commands-mcp.git
+cd git-commands-mcp
+npm install
+```
+
 ## Configuration
 
 Add this to your MCP settings configuration file:
+
+```json
+{
+  "mcpServers": {
+    "git-commands-mcp": {
+      "command": "git-commands-mcp"
+    }
+  }
+}
+```
+
+For manual installation, use:
 
 ```json
 {
@@ -89,17 +120,15 @@ git-commands-mcp/
 - Node.js 14.x or higher
 - Git installed on the system
 
-## Installation
-
-```bash
-git clone <repository-url>
-cd git-commands-mcp
-npm install
-```
-
 ## Usage
 
-Start the server:
+If installed globally via npm:
+
+```bash
+git-commands-mcp
+```
+
+If installed manually:
 
 ```bash
 node src/index.js
@@ -110,3 +139,9 @@ The server runs on stdio, making it compatible with MCP clients.
 ## License
 
 MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Links
+
+- [GitHub Repository](https://github.com/bsreeram08/git-commands-mcp)
+- [NPM Package](https://www.npmjs.com/package/git-commands-mcp)
+- [Report Issues](https://github.com/bsreeram08/git-commands-mcp/issues)
