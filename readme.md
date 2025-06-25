@@ -1,4 +1,4 @@
-# MCP Git Repo Browser (Node.js)
+# MCP Git Repo Operation Helper (Node.js)
 
 A Node.js implementation of a Git repository browser using the Model Context Protocol (MCP).
 
