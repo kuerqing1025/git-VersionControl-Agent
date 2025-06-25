@@ -1,0 +1,40 @@
+{
+  "name": "git-commands-mcp",
+  "version": "0.1.4",
+  "description": "A Node.js implementation of a Git repository browser using the Model Context Protocol (MCP)",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "git-commands-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "prepublishOnly": "npm ci && echo \"No tests specified - publishing anyway\""
+  },
+  "author": "sreeram balamurugan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bsreeram08/git-commands-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bsreeram08/git-commands-mcp/issues"
+  },
+  "homepage": "https://github.com/bsreeram08/git-commands-mcp#readme",
+  "keywords": [
+    "git",
+    "mcp",
+    "model-context-protocol",
+    "repository",
+    "browser"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.5.0",
+    "@surfai/docs-mcp": "^1.0.1",
+    "fs-extra": "^11.3.0",
+    "simple-git": "^3.27.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

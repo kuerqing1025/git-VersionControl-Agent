@@ -1,0 +1,58 @@
+# Git Commands MCP Project Rules
+
+## Package Version Management
+
+1. **Increment Version Before Pushing**: 
+   - Always increment the version number in `package.json` before pushing to the repository
+   - This is critical as pushes to the repository trigger an npm package release through the CI/CD pipeline
+   - Current version format is semantic versioning (major.minor.patch)
+
+2. **Version Update Workflow**:
+   - Check current version in package.json
+   - Increment appropriate segment based on changes:
+     - Patch (0.1.x): Bug fixes and minor changes
+     - Minor (0.x.0): New features, backward compatible
+     - Major (x.0.0): Breaking changes
+   - Stage and commit version change separately
+   - Sample commit message: "Bump version to X.Y.Z for npm release"
+
+## Repository Configuration
+
+1. **Git Remote Setup**:
+   - Repository uses SSH for authentication: `git@github.com:bsreeram08/git-commands-mcp.git`
+   - SSH keys must be properly configured for push access
+
+2. **Branch Structure**:
+   - Main development happens on `master` branch
+   - Use feature branches for new development
+
+## CI/CD Pipeline
+
+1. **GitHub Actions**:
+   - The repository has an npm-publish workflow in `.github/workflows/npm-publish.yml`
+   - This workflow triggers on pushes to the repository
+   - It builds and publishes the package to npm registry automatically
+
+2. **Release Checklist**:
+   - Update version in package.json
+   - Ensure all changes are committed
+   - Push to repository
+   - Verify GitHub Actions workflow completes successfully
+   - Check npm registry for the updated package
+
+## Development Patterns
+
+1. **Tool Handler Registration**:
+   - When adding new Git handlers, ensure they are added to both:
+     - `this.handlersMap` for functional registration
+     - `this.toolsList` for exposure through the MCP interface
+   - Update appropriate handler category in `this.handlerCategories`
+
+2. **Code Organization**:
+   - Handlers are organized in `src/handlers/index.js`
+   - Server setup is in `src/server.js`
+   - Main entry point is `src/index.js`
+
+3. **Naming Conventions**:
+   - Git tool handlers follow pattern: `git_[action]_[resource]`
+   - Handler implementations follow pattern: `handleGit[Action][Resource]`
