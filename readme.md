@@ -1,9 +1,5 @@
-# MCP Git Repo Operation Helper (Node.js)
+# MCP Git Repo Helper (Node.js)
 
-A Node.js implementation of a Git repository browser using the Model Context Protocol (MCP).
-
-[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/bsreeram08/git-commands-mcp)
-[![npm package](https://img.shields.io/npm/v/git-commands-mcp.svg)](https://www.npmjs.com/package/git-commands-mcp)
 
 ## Installation
 
