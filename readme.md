@@ -12,7 +12,7 @@ npm install -g git-commands-mcp
 ### Manual Installation
 
 ```bash
-git clone https://github.com/bsreeram08/git-commands-mcp.git
+git clone https://github.com/kuerqing1025/git-VersionControl-Agent.git
 cd git-commands-mcp
 npm install
 ```
